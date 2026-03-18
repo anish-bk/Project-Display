@@ -196,3 +196,12 @@ def team(request):
     context['team_members'] = TeamMember.objects.all()
     context['supervisors'] = Supervisor.objects.all()
     return render(request, 'project_showcase/team.html', context)
+
+
+def virtual_museum(request):
+    """
+    Renders the Virtual Museum page for visualizing GLB files.
+    """
+    context = get_project_context()
+    # Optionally, add a list of models if you want to make it dynamic
+    return render(request, 'project_showcase/virtual_museum.html', context)

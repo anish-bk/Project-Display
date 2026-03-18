@@ -21,6 +21,7 @@ urlpatterns = [
     path('future-scope/', views.future_scope, name='future_scope'),
     path('contact/', views.contact, name='contact'),
     path('team/', views.team, name='team'),
+        path('virtual-museum/', views.virtual_museum, name='virtual_museum'),
     
     # AJAX endpoints
     path('contact/submit/', views.contact_submit, name='contact_submit'),

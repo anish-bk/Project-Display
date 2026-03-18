@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Virtual Museum</h1>
+    <p>Explore our 3D models below. Click and drag to interact with each model.</p>
+    <div id="museum-gallery" class="row">
+        <!-- Example GLB viewer, update src with your .glb file paths -->
+        <div class="col-md-6 mb-4">
+            <model-viewer src="{% static 'models/model1.glb' %}" alt="3D Model 1" auto-rotate camera-controls style="width: 100%; height: 400px;"></model-viewer>
+            <p class="text-center">Model 1 Description</p>
+        </div>
+        <!-- Add more models as needed, e.g.:
+        <div class="col-md-6 mb-4">
+            <model-viewer src="{% static 'models/model2.glb' %}" alt="3D Model 2" auto-rotate camera-controls style="width: 100%; height: 400px;"></model-viewer>
+            <p class="text-center">Model 2 Description</p>
+        </div>
+        -->
+    </div>
+</div>
+<!-- model-viewer web component -->
+<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+{% endblock %}
