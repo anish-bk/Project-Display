@@ -16,6 +16,7 @@ from .models import (
     ContactSubmission, Methodology, Limitation
 )
 from .forms import ContactForm
+from .museum_data import get_museum_artifacts
 
 
 def get_project_context():
@@ -96,7 +97,7 @@ def features(request):
 
 def screenshots(request):
     """
-    Renders the Screenshots/Demo page with image gallery.
+    Renders the Screenshots/Demo page with virtual museum gallery.
     """
     context = get_project_context()
     context['screenshots'] = Screenshot.objects.all()
@@ -108,6 +109,9 @@ def screenshots(request):
         cat: Screenshot.objects.filter(category=cat)
         for cat in categories
     }
+    
+    # Load museum artifacts for the gallery
+    context['artifacts'] = get_museum_artifacts()
     
     return render(request, 'project_showcase/screenshots.html', context)
 
@@ -124,6 +128,9 @@ def results(request):
     context['reconstruction_limitations'] = Limitation.objects.filter(category='reconstruction')
     context['editing_limitations'] = Limitation.objects.filter(category='editing')
     context['system_limitations'] = Limitation.objects.filter(category='system')
+    
+    # Load museum artifacts for reconstruction results
+    context['artifacts'] = get_museum_artifacts()
     
     return render(request, 'project_showcase/results.html', context)
 
