@@ -212,3 +212,13 @@ def virtual_museum(request):
     context = get_project_context()
     # Optionally, add a list of models if you want to make it dynamic
     return render(request, 'project_showcase/virtual_museum.html', context)
+
+
+def demo(request):
+    """
+    Renders the Try-It Demo page for 3D reconstruction.
+    Users can select from gallery, upload an image, or capture via camera.
+    """
+    context = get_project_context()
+    context['artifacts'] = get_museum_artifacts()
+    return render(request, 'project_showcase/demo.html', context)
