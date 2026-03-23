@@ -120,7 +120,7 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Media files
-MEDIA_URL = 'media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
@@ -133,3 +133,6 @@ PROJECT_TITLE = "Single Image 3D Reconstruction"
 PROJECT_INSTITUTION = "Tribhuvan University, Institute of Engineering, Pulchowk Campus"
 PROJECT_DEPARTMENT = "Department of Electronics and Computer Engineering"
 PROJECT_YEAR = "2025"
+
+# Allow large data payloads (up to 100MB) to accommodate Heavy GLB Base64 Webhook uploads
+DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600

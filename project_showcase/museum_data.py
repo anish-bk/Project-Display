@@ -111,4 +111,40 @@ def get_museum_artifacts():
         }
         artifacts.append(artifact)
 
+    # Automatically ingest User-Generated content actively stored by Lightning AI webhook uploads
+    outputs_dir = os.path.join(settings.BASE_DIR, 'media', 'Outputs')
+    if os.path.isdir(outputs_dir):
+        for f in reversed(sorted(os.listdir(outputs_dir))):  # Show newest first
+            if f.startswith('asset_3d_') and f.endswith('.glb'):
+                session_id = f[9:-4]
+                
+                # Primary naming convention: asset_image_{session_id}.jpg
+                # Fallback (legacy): image_asset_{session_id}.jpg
+                primary_img = f"asset_image_{session_id}.jpg"
+                fallback_img = f"image_asset_{session_id}.jpg"
+                
+                if os.path.exists(os.path.join(outputs_dir, primary_img)):
+                    img_filename = primary_img
+                elif os.path.exists(os.path.join(outputs_dir, fallback_img)):
+                    img_filename = fallback_img
+                else:
+                    continue  # No image found for this session
+                
+                heatmap_path = os.path.join(outputs_dir, f"asset_heatmap_{session_id}.glb")
+                has_heatmap = os.path.exists(heatmap_path)
+                
+                user_artifact = {
+                    'session_id': session_id,
+                    'name': f"Live Generation ({session_id})",
+                    'slug': f"user_gen_{session_id}",
+                    'is_user_generated': True,
+                    'input_image': f"{settings.MEDIA_URL.rstrip('/')}/Outputs/{img_filename}",
+                    'best_glb': f"{settings.MEDIA_URL.rstrip('/')}/Outputs/asset_3d_{session_id}.glb",
+                    'heatmap_glb': f"{settings.MEDIA_URL.rstrip('/')}/Outputs/asset_heatmap_{session_id}.glb" if has_heatmap else None,
+                    'iterations': [],
+                    'iteration_count': 1,
+                }
+                # Insert newly generated elements at the front of the gallery
+                artifacts.insert(0, user_artifact)
+
     return artifacts

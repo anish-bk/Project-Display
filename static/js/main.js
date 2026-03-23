@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const backToTop = document.querySelector('.back-to-top');
     
     function handleBackToTop() {
+        if (!backToTop) return;
         if (window.scrollY > 500) {
             backToTop.classList.add('show');
         } else {

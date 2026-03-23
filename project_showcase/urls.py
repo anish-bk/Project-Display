@@ -26,4 +26,11 @@ urlpatterns = [
     
     # AJAX endpoints
     path('contact/submit/', views.contact_submit, name='contact_submit'),
+    path('api/generate-3d/', views.generate_3d, name='generate_3d'),
+    path('api/generate-heatmap/', views.generate_heatmap, name='generate_heatmap'),
+    path('api/webhook/receive/', views.receive_webhook, name='receive_webhook'),
+    path('api/delete/<str:session_id>/', views.delete_asset_view, name='delete_asset'),
+    path('api/delete-museum/<str:slug>/', views.delete_museum_asset_view, name='delete_museum_asset'),
+    path('api/status/<str:session_id>', views.check_status, name='check_status_base'),
+    path('api/status/<str:session_id>/', views.check_status, name='check_status'),
 ]

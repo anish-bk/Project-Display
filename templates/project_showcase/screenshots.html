@@ -171,6 +171,34 @@
         color: #1a202c;
     }
 
+    /* --- Delete Artifact Button --- */
+    .btn-delete-artifact {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 20;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(0, 0, 0, 0.5);
+        color: #fff;
+        font-size: 0.8rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        opacity: 0.6;
+    }
+
+    .btn-delete-artifact:hover {
+        background: #ef4444;
+        opacity: 1;
+        transform: scale(1.15);
+        box-shadow: 0 2px 10px rgba(239, 68, 68, 0.4);
+    }
+
     /* --- 3D Viewer Modal --- */
     .viewer-modal-overlay {
         display: none;
@@ -810,12 +838,19 @@
         <!-- Museum Artifact Cards -->
         <div class="museum-grid" data-aos="fade-up">
             {% for art in artifacts %}
-            <div class="artifact-exhibit-card gallery-item" data-category="reconstruction">
+            <div class="artifact-exhibit-card gallery-item" data-category="reconstruction"
+                id="artifact-card-{{ forloop.counter }}" style="position:relative;">
+                <!-- Delete Button -->
+                <button class="btn-delete-artifact"
+                    onclick="deleteArtifact('{{ art.slug }}', {{ forloop.counter }}, {% if art.is_user_generated %}true{% else %}false{% endif %}, '{{ art.session_id|default:"" }}')"
+                    title="Delete {{ art.name }}" aria-label="Delete {{ art.name }}">
+                    <i class="fas fa-times"></i>
+                </button>
                 <!-- Image Area with Tab switching -->
                 <div class="card-image-area" id="card-img-area-{{ forloop.counter }}">
                     {% if art.input_image %}
-                    <img src="{% static art.input_image %}" alt="{{ art.name }} - Original Input"
-                        class="card-img active-img" data-type="original">
+                    <img src="{% if art.is_user_generated %}{{ art.input_image }}{% else %}{% static art.input_image %}{% endif %}"
+                        alt="{{ art.name }} - Original Input" class="card-img active-img" data-type="original">
                     {% endif %}
                     {% if art.nobg_image %}
                     <img src="{% static art.nobg_image %}" alt="{{ art.name }} - Background Removed" class="card-img"
@@ -882,7 +917,8 @@
             <div class="hm-card-header" onclick="toggleHeatmapCard(this)">
                 <div class="hm-card-thumb">
                     {% if art.input_image %}
-                    <img src="{% static art.input_image %}" alt="{{ art.name }}">
+                    <img src="{% if art.is_user_generated %}{{ art.input_image }}{% else %}{% static art.input_image %}{% endif %}"
+                        alt="{{ art.name }}">
                     {% endif %}
                 </div>
                 <div class="hm-card-info">
@@ -902,12 +938,83 @@
                         <!-- Reference Input Image -->
                         <div class="hm-ref-image">
                             {% if art.input_image %}
-                            <img src="{% static art.input_image %}" alt="{{ art.name }} reference">
+                            <img src="{% if art.is_user_generated %}{{ art.input_image }}{% else %}{% static art.input_image %}{% endif %}"
+                                alt="{{ art.name }} reference">
                             {% endif %}
                             <div class="hm-ref-label"><i class="fas fa-image me-1"></i>Reference Input</div>
                         </div>
 
-                        <!-- Dual Heatmap Comparison Panels -->
+                        {% if art.is_user_generated %}
+                        <!-- User-Generated: Direct 3D Model + Heatmap Side-by-Side -->
+                        <div>
+                            <div class="hm-dual-panel">
+                                <!-- Panel A: 3D Model -->
+                                <div class="hm-panel">
+                                    <div class="hm-panel-header">
+                                        <span class="panel-label label-a"><i class="fas fa-cube me-1"
+                                                style="font-size:0.5rem"></i>3D Model</span>
+                                    </div>
+                                    <div class="hm-panel-viewport">
+                                        {% if art.best_glb %}
+                                        <model-viewer src="{{ art.best_glb }}" alt="3D Model" auto-rotate
+                                            camera-controls shadow-intensity="1" environment-image="neutral"
+                                            style="width: 100%; height: 100%; display: block;"></model-viewer>
+                                        <div
+                                            style="position:absolute; bottom:10px; left:10px; z-index:5; background:rgba(0,0,0,0.6); padding:4px 8px; border-radius:6px; color:#fff; font-size:0.7rem; font-weight:700;">
+                                            GENERATED 3D MESH
+                                        </div>
+                                        {% else %}
+                                        <div class="hm-panel-placeholder">
+                                            <i class="fas fa-cube"></i>
+                                            <span>No 3D model available</span>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Panel B: Heatmap -->
+                                <div class="hm-panel">
+                                    <div class="hm-panel-header">
+                                        <span class="panel-label label-b"><i class="fas fa-fire me-1"
+                                                style="font-size:0.5rem"></i>Uncertainty Map</span>
+                                    </div>
+                                    <div class="hm-panel-viewport">
+                                        {% if art.heatmap_glb %}
+                                        <model-viewer src="{{ art.heatmap_glb }}" alt="Heatmap" auto-rotate
+                                            camera-controls shadow-intensity="1" environment-image="neutral"
+                                            style="width: 100%; height: 100%; display: block;"></model-viewer>
+                                        <div
+                                            style="position:absolute; bottom:10px; left:10px; z-index:5; background:rgba(0,0,0,0.6); padding:4px 8px; border-radius:6px; color:#fff; font-size:0.7rem; font-weight:700;">
+                                            TOPOLOGY HEATMAP
+                                        </div>
+                                        {% else %}
+                                        <div class="hm-panel-placeholder">
+                                            <i class="fas fa-fire"></i>
+                                            <span>Heatmap not yet computed</span>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Quality Info -->
+                            <div class="hm-quality-bar" style="margin-top:1rem;">
+                                <label><i class="fas fa-info-circle me-1"></i>Status:</label>
+                                <div style="flex:1;">
+                                    <div class="hm-quality-track">
+                                        <div class="hm-quality-fill"
+                                            style="width: {% if art.heatmap_glb %}100{% else %}50{% endif %}%;"></div>
+                                    </div>
+                                    <div class="hm-quality-markers">
+                                        <span>3D Model ✓</span>
+                                        <span>{% if art.heatmap_glb %}Heatmap ✓{% else %}Heatmap pending{% endif %}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% else %}
+                        <!-- Museum Artifacts: Iteration Dropdown Comparison -->
                         <div>
                             <div class="hm-dual-panel">
                                 <!-- Panel A -->
@@ -965,7 +1072,6 @@
                                         data-artifact="{{ forloop.parentloop.counter }}"
                                         onclick="selectIterThumb(event, this)">
                                         <div class="hm-iter-thumb-img">
-                                            <!-- Placeholder icon — replace with actual heatmap thumbnails later -->
                                             <div
                                                 style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, rgba(102,126,234,0.08), rgba(240,147,251,0.08));">
                                                 <i class="fas fa-fire"
@@ -993,6 +1099,7 @@
                                 </div>
                             </div>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -1079,7 +1186,6 @@
         </div>
     </div>
 </div>
-
 {% endblock %}
 
 {% block extra_js %}
@@ -1089,9 +1195,13 @@
         {% for art in artifacts %}
     {
         name: "{{ art.name }}",
-            iterations: [
-                {% for iter in art.iterations %}
-    { number: {{ iter.number }}, glb: "{% static iter.glb_path %}" },
+            slug: "{{ art.slug }}",
+                isUserGenerated: {% if art.is_user_generated %} true{% else %} false{% endif %},
+        bestGlb: "{% if art.is_user_generated %}{{ art.best_glb }}{% elif art.best_glb %}{% static art.best_glb %}{% endif %}",
+            heatmapGlb: "{% if art.heatmap_glb %}{{ art.heatmap_glb }}{% endif %}",
+                iterations: [
+                    {% for iter in art.iterations %}
+    { number: {{ iter.number }}, glb: "{% static iter.glb_path %}", hm_glb: "{% static 'comparison/' %}{{ art.slug }}/iter_{{ iter.number }}.glb" },
     {% endfor %}
             ]
         },
@@ -1124,26 +1234,57 @@
         const iterBar = document.getElementById('iterationBar');
 
         const data = artifactData[artifactIdx];
-        if (!data || data.iterations.length === 0) return;
+        if (!data) return;
+
+        // User-generated artifacts have no iterations but have bestGlb
+        if (data.iterations.length === 0 && !data.bestGlb) return;
 
         titleEl.innerHTML = '<i class="fas fa-cube me-2"></i>' + name;
 
         // Build iteration buttons
         iterBar.innerHTML = '<label><i class="fas fa-layer-group me-1"></i>Iteration:</label>';
-        data.iterations.forEach((iter, i) => {
-            const btn = document.createElement('button');
-            btn.className = 'iter-btn' + (i === data.iterations.length - 1 ? ' active' : '');
-            btn.textContent = '#' + iter.number;
-            btn.onclick = function () {
-                iterBar.querySelectorAll('.iter-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                viewer.src = iter.glb;
-            };
-            iterBar.appendChild(btn);
-        });
 
-        // Load the last (best) iteration by default
-        viewer.src = data.iterations[data.iterations.length - 1].glb;
+        if (data.iterations.length > 0) {
+            data.iterations.forEach((iter, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'iter-btn' + (i === data.iterations.length - 1 ? ' active' : '');
+                btn.textContent = '#' + iter.number;
+                btn.onclick = function () {
+                    iterBar.querySelectorAll('.iter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    viewer.src = iter.glb;
+                };
+                iterBar.appendChild(btn);
+            });
+            // Load the last (best) iteration by default
+            viewer.src = data.iterations[data.iterations.length - 1].glb;
+        } else {
+            // User-generated: single GLB, optionally also show heatmap toggle
+            const bestBtn = document.createElement('button');
+            bestBtn.className = 'iter-btn active';
+            bestBtn.textContent = '3D Model';
+            bestBtn.onclick = function () {
+                iterBar.querySelectorAll('.iter-btn').forEach(b => b.classList.remove('active'));
+                bestBtn.classList.add('active');
+                viewer.src = data.bestGlb;
+            };
+            iterBar.appendChild(bestBtn);
+
+            if (data.heatmapGlb) {
+                const hmBtn = document.createElement('button');
+                hmBtn.className = 'iter-btn';
+                hmBtn.textContent = '🔥 Heatmap';
+                hmBtn.onclick = function () {
+                    iterBar.querySelectorAll('.iter-btn').forEach(b => b.classList.remove('active'));
+                    hmBtn.classList.add('active');
+                    viewer.src = data.heatmapGlb;
+                };
+                iterBar.appendChild(hmBtn);
+            }
+
+            viewer.src = data.bestGlb;
+        }
+
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
     }
@@ -1224,15 +1365,29 @@
             return;
         }
 
-        // Show placeholder with iteration number
-        // (Replace this innerHTML with an actual <img> tag pointing to the heatmap when images are ready)
-        viewport.innerHTML = `
-            <div class="hm-panel-placeholder" style="border-style:solid; border-color:rgba(102,126,234,0.2);">
-                <i class="fas fa-fire-alt"></i>
-                <span style="font-size:0.85rem; color:#a0aec0;">Iteration ${iterNum}</span>
-                <span style="font-size:0.6rem;">Heatmap image placeholder</span>
-            </div>
-        `;
+        const artData = artifactData[artifactNum - 1];
+        const iterData = artData.iterations.find(iter => iter.number == iterNum);
+
+        if (iterData && iterData.hm_glb) {
+            viewport.innerHTML = `
+<model-viewer src="${iterData.hm_glb}" alt="Iter ${iterNum} Heatmap" auto-rotate camera-controls shadow-intensity="1"
+    environment-image="neutral" style="width: 100%; height: 100%; display: block;">
+</model-viewer>
+
+<div
+    style="position:absolute; bottom:10px; left:10px; z-index:5; background:rgba(0,0,0,0.6); padding:4px 8px; border-radius:6px; color:#fff; font-size:0.7rem; font-weight:700;">
+    ITER #${iterNum} TOPOLOGY MAP
+</div>
+`;
+        } else {
+            viewport.innerHTML = `
+<div class="hm-panel-placeholder" style="border-style:solid; border-color:rgba(102,126,234,0.2);">
+    <i class="fas fa-exclamation-triangle"></i>
+    <span style="font-size:0.85rem; color:#a0aec0;">Iteration ${iterNum}</span>
+    <span style="font-size:0.6rem;">Missing Binary Map</span>
+</div>
+`;
+        }
 
         // Update timeline highlights
         if (strip) {
@@ -1271,5 +1426,58 @@
             setTimeout(() => toggleHeatmapCard(firstHeader), 1500);
         }
     });
+
+    // ===== Delete Artifact =====
+    async function deleteArtifact(slug, cardIndex, isUserGenerated, sessionId) {
+        const confirmMsg = isUserGenerated
+            ? 'Delete this generated artifact permanently? This will remove the 3D model and all associated files.'
+            : 'Delete this museum artifact permanently? This will remove all iteration meshes and heatmap data.';
+
+        if (!confirm(confirmMsg)) return;
+
+        try {
+            let endpoint, method, headers, body;
+            if (isUserGenerated && sessionId) {
+                endpoint = '/api/delete/' + sessionId + '/';
+                method = 'POST';
+                headers = { 'Content-Type': 'application/json' };
+                body = null;
+            } else {
+                endpoint = '/api/delete-museum/' + encodeURIComponent(slug) + '/';
+                method = 'POST';
+                headers = { 'Content-Type': 'application/json' };
+                body = null;
+            }
+
+            const response = await fetch(endpoint, { method, headers });
+            const data = await response.json();
+
+            if (data.success) {
+                // Remove the artifact card from gallery
+                const card = document.getElementById('artifact-card-' + cardIndex);
+                if (card) {
+                    card.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                    card.style.opacity = '0';
+                    card.style.transform = 'scale(0.8)';
+                    setTimeout(() => card.remove(), 400);
+                }
+
+                // Remove the corresponding heatmap comparison card
+                const hmCards = document.querySelectorAll('.heatmap-compare-card');
+                if (hmCards[cardIndex - 1]) {
+                    const hm = hmCards[cardIndex - 1];
+                    hm.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                    hm.style.opacity = '0';
+                    hm.style.transform = 'scale(0.8)';
+                    setTimeout(() => hm.remove(), 400);
+                }
+            } else {
+                alert('Failed to delete: ' + (data.error || 'Unknown error'));
+            }
+        } catch (err) {
+            alert('Error deleting artifact: ' + err.message);
+        }
+    }
+
 </script>
 {% endblock %}
